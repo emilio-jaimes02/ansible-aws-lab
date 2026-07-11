@@ -1,0 +1,12 @@
+# Llaves privadas
+*.pem
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+crash.log
+terraform.tfvars
+
+# Inventario generado
+ansible/inventory.ini
