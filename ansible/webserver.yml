@@ -1,0 +1,59 @@
+- name: Instalar Docker y publicar el encriptador
+  hosts: aws_servers
+  become: true
+  gather_facts: true
+
+  vars:
+    repo_url: "https://github.com/emilio-jaimes02/ansible-aws-lab.git"
+    app_dir: "/opt/ansible-aws-lab"
+    image_name: "encriptadorweb"
+    container_name: "encriptadorweb"
+
+  tasks:
+    - name: Actualizar la caché de paquetes
+      ansible.builtin.apt:
+        update_cache: true
+        cache_valid_time: 3600
+
+    - name: Instalar Git y Docker
+      ansible.builtin.apt:
+        name:
+          - git
+          - docker.io
+        state: present
+
+    - name: Iniciar y habilitar Docker
+      ansible.builtin.service:
+        name: docker
+        state: started
+        enabled: true
+
+    - name: Clonar o actualizar el repositorio
+      ansible.builtin.git:
+        repo: "{{ repo_url }}"
+        dest: "{{ app_dir }}"
+        version: main
+        force: true
+
+    - name: Construir la imagen Docker
+      ansible.builtin.command:
+        cmd: "docker build -t {{ image_name }} ."
+        chdir: "{{ app_dir }}"
+      changed_when: true
+
+    - name: Eliminar el contenedor anterior
+      ansible.builtin.command:
+        cmd: "docker rm -f {{ container_name }}"
+      register: remove_container
+      failed_when: false
+      changed_when: remove_container.rc == 0
+
+    - name: Ejecutar el contenedor
+      ansible.builtin.command:
+        cmd: "docker run -d --name {{ container_name }} --restart unless-stopped -p 80:80 {{ image_name }}"
+      changed_when: true
+
+    - name: Verificar que la página responda
+      ansible.builtin.uri:
+        url: "http://127.0.0.1/Encriptador/"
+        status_code: 200
