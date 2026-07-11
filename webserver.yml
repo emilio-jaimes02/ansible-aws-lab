@@ -1,0 +1,41 @@
+---
+- name: Configurar servidor web con Ansible
+  hosts: localhost
+  connection: local
+  become: true
+  gather_facts: true
+
+  tasks:
+    - name: Actualizar la lista de paquetes
+      ansible.builtin.apt:
+        update_cache: true
+        cache_valid_time: 3600
+
+    - name: Instalar Nginx
+      ansible.builtin.apt:
+        name: nginx
+        state: present
+
+    - name: Crear una página web de prueba
+      ansible.builtin.copy:
+        dest: /var/www/html/index.html
+        content: |
+          <!DOCTYPE html>
+          <html>
+          <head>
+              <title>Laboratorio Ansible</title>
+          </head>
+          <body>
+              <h1>Servidor configurado con Ansible desde GitHub</h1>
+              <p>Laboratorio de AWS Systems Manager</p>
+          </body>
+          </html>
+        owner: root
+        group: root
+        mode: "0644"
+
+    - name: Iniciar y habilitar Nginx
+      ansible.builtin.service:
+        name: nginx
+        state: started
+        enabled: true
